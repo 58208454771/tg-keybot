@@ -1,0 +1,41 @@
+name: setwebhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_url:
+        description: "Worker URL (末尾带 /)"
+        required: true
+        default: "https://fqywx-keybot.2862025732.workers.dev/"
+      webhook_secret:
+        description: "WEBHOOK_SECRET"
+        required: true
+        default: "fq2026_3198aa98ff05d49ec937ca28e8ea69cf"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查 Worker 是否在线
+        run: |
+          echo "== worker root =="
+          curl -sS --max-time 30 "${{ github.event.inputs.worker_url }}" || true
+          echo
+      - name: getWebhookInfo (设置前)
+        run: |
+          echo "== before =="
+          curl -sS "https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/getWebhookInfo" || true
+          echo
+      - name: setWebhook
+        run: |
+          echo "== setWebhook =="
+          curl -sS -G "https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/setWebhook" \
+            --data-urlencode "url=${{ github.event.inputs.worker_url }}" \
+            --data-urlencode "secret_token=${{ github.event.inputs.webhook_secret }}" \
+            --data-urlencode 'allowed_updates=["message"]'
+          echo
+      - name: getWebhookInfo (设置后)
+        run: |
+          echo "== after =="
+          curl -sS "https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/getWebhookInfo" || true
+          echo
